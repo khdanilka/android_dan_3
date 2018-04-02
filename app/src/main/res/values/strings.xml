@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">android3_1</string>
+    <string name="count_zero">Количество = 0</string>
+    <string name="count_format">Количество = %d</string>
+</resources>
