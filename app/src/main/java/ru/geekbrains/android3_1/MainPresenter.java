@@ -7,7 +7,16 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainViewInterface>
@@ -44,7 +53,37 @@ public class MainPresenter extends MvpPresenter<MainViewInterface>
     {
         super.onFirstViewAttach();
         getViewState().init();
-        listPrestenter.strings = stringsRepository.getStrings();
+        //listPrestenter.strings = stringsRepository.getStrings();
+
+
+        Observable<String> observable =
+                Observable.fromIterable(stringsRepository.getStrings())
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread());
+        final Observer<String> listPrestenterObserver = new Observer<String>() {
+            List<String> bufList;
+            @Override
+            public void onSubscribe(Disposable d) {
+                bufList = new ArrayList<>();
+            }
+
+            @Override
+            public void onNext(String s) {
+                bufList.add(s);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.d("ERROR","что-то пошло не так");
+            }
+
+            @Override
+            public void onComplete() {
+                 listPrestenter.strings = bufList;
+            }
+        };
+        observable.subscribe(listPrestenterObserver);
+
         getViewState().updateList();
     }
 
@@ -53,25 +92,31 @@ public class MainPresenter extends MvpPresenter<MainViewInterface>
         int val = -1;
         for(int i = 0; i < buttonList.size(); i++){
             if (id == buttonList.get(i).getId()) {
-                val = counterModel.calculate(i);
+                //val = counterModel.calculate(i);
+                val = modelCalc(i);
                 break;
             }
         }
-//        switch (id)
-//        {
-//            case R.id.btn_one:
-//                val = counterModel.calculate(0);
-//                break;
-//            case R.id.btn_two:
-//                val = counterModel.calculate(1);
-//                break;
-//            case R.id.btn_three:
-//                val = counterModel.calculate(2);
-//                break;
-//        }
-
         getViewState().setButtonValue(val, id);
     }
+    private Observer<String> observer;
+
+    public Integer modelCalc(final Integer index){
+
+        final Integer[] val = new Integer[1];
+        Observable.just(counterModel.calculate(index))
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        val[0] = integer;
+                    }
+                });
+        return val[0];
+    }
+
+
 
     public int getValueForButton(int index){
         return counterModel.valueByIndex(index);
