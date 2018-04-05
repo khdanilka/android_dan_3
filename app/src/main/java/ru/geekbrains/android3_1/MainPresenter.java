@@ -46,6 +46,8 @@ public class MainPresenter extends MvpPresenter<MainViewInterface>
     public MainPresenter(String arg)
     {
         Log.d(TAG, arg);
+
+
     }
 
     @Override
@@ -92,27 +94,43 @@ public class MainPresenter extends MvpPresenter<MainViewInterface>
         int val = -1;
         for(int i = 0; i < buttonList.size(); i++){
             if (id == buttonList.get(i).getId()) {
-                //val = counterModel.calculate(i);
+//                val = counterModel.calculate(i);
                 val = modelCalc(i);
                 break;
             }
         }
         getViewState().setButtonValue(val, id);
     }
-    private Observer<String> observer;
+    private Observer observer;
 
     public Integer modelCalc(final Integer index){
 
         final Integer[] val = new Integer[1];
-        Observable.just(counterModel.calculate(index))
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<Integer>() {
-                    @Override
-                    public void accept(Integer integer) throws Exception {
-                        val[0] = integer;
-                    }
-                });
+//        final Integer[] val = new Integer[1];
+//        Observable.just(counterModel.calculate(index))
+//                .subscribeOn(Schedulers.newThread())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(new Consumer<Integer>() {
+//                    @Override
+//                    public void accept(Integer integer) throws Exception {
+//                        val[0] = integer;
+//                    }
+//                });
+//        return val[0];
+
+        Observable<Integer> justObservable = Observable
+                .just(counterModel.calculate(index));
+                //.subscribeOn(Schedulers.computation())
+                //.observeOn(AndroidSchedulers.mainThread());
+
+        justObservable.subscribe(new Consumer<Integer>() {
+            @Override
+            public void accept(Integer s) throws Exception {
+                //Log.d(TAG, "onNext: " + s + " 2");
+                val[0] = s;
+            }
+        });
+
         return val[0];
     }
 
